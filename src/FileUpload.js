@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   FaGoogle,
@@ -44,37 +44,63 @@ export default function FileUpload() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [waitingMessage, setWaitingMessage] = useState(waitingMessages[0]);
   const [language, setLanguage] = useState(languageOptions[0]);
+
+  // (1) 드롭다운 열림 상태
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
 
-  useEffect(() => {
-    if (resultPending) {
-      let index = 0;
-      const interval = setInterval(() => {
-        index = (index + 1) % waitingMessages.length;
-        setWaitingMessage(waitingMessages[index]);
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [resultPending]);
+  // (2) 드롭다운 참조 ref
+  const dropdownRef = useRef(null);
 
+  // (3) 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (
+        isLanguageOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target)
+      ) {
+        setIsLanguageOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isLanguageOpen]);
+
+  // 다크 모드 여부
+  const [darkMode, setDarkMode] = useState(false);
+
+  // 다크 모드 적용
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
+  // 파일 추가
   const handleFileChange = (event) => {
     const newFiles = Array.from(event.target.files);
     setFiles((prev) => [...prev, ...newFiles]);
     setError(newFiles.length ? "" : "Invalid file type or size exceeded (10MB max). ");
   };
 
+  // 파일 제거
   const removeFile = (index) => {
     setFiles(files.filter((_, i) => i !== index));
   };
 
+  // PDF 다운로드, 공유 기능 (임시)
   const handleDownloadPDF = () => {
     alert("PDF Download not implemented");
   };
-
   const handleShareResult = () => {
     alert("Share Result not implemented");
   };
 
+  // 업로드/분석 버튼
   const handleUpload = () => {
     if (!files.length) {
       return setError("Please upload files.");
@@ -96,14 +122,71 @@ export default function FileUpload() {
     }, 10000);
   };
 
+  // 대기 메시지 순환
+  useEffect(() => {
+    if (resultPending) {
+      let index = 0;
+      const interval = setInterval(() => {
+        index = (index + 1) % waitingMessages.length;
+        setWaitingMessage(waitingMessages[index]);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [resultPending]);
+
   return (
-    // 전체 화면 중앙 정렬
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 transition-colors">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 transition-colors">
+        {/* 헤더 영역 */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold dark:text-white">
+            Medical Quick Analysis
+          </h2>
+          {/* 언어 & 다크모드 영역 */}
+          <div className="flex items-center gap-2">
+            {/* (4) 다크모드 토글 버튼 */}
+            <button
+              onClick={() => setDarkMode((prev) => !prev)}
+              className="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
+            >
+              {darkMode ? "Light Mode" : "Dark Mode"}
+            </button>
+
+            {/* (5) 언어 드롭다운 */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                className="flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+              >
+                <FaGlobe className="text-xl dark:text-white" />
+                <span className="dark:text-white">
+                  {language.flag} {language.lang}
+                </span>
+              </button>
+              {isLanguageOpen && (
+                <div className="absolute right-0 mt-2 w-24 bg-white dark:bg-gray-700 border rounded shadow-lg overflow-hidden">
+                  {languageOptions.map(({ lang, flag }) => (
+                    <button
+                      key={lang}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 w-full text-left"
+                      onClick={() => {
+                        setLanguage({ lang, flag });
+                        setIsLanguageOpen(false);
+                      }}
+                    >
+                      <span className="dark:text-white">{flag} {lang}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* 대기 화면 */}
         {showAnalysisScreen && !analysisResult ? (
           <motion.div
-            className="text-center text-xl font-semibold"
+            className="text-center text-xl font-semibold dark:text-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -112,50 +195,24 @@ export default function FileUpload() {
           </motion.div>
         ) : (
           <>
-            {/* 헤더 영역 */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Medical Quick Analysis</h2>
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-200 rounded-full shadow hover:bg-gray-300 transition-all"
-                  onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                >
-                  <FaGlobe className="text-xl" />
-                  {language.flag} {language.lang}
-                </button>
-                {isLanguageOpen && (
-                  <div className="absolute right-0 mt-2 w-24 bg-white border rounded shadow-lg overflow-hidden">
-                    {languageOptions.map(({ lang, flag }) => (
-                      <button
-                        key={lang}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-200 w-full text-left"
-                        onClick={() => {
-                          setLanguage({ lang, flag });
-                          setIsLanguageOpen(false);
-                        }}
-                      >
-                        {flag} {lang}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* 본문 */}
             {analysisResult ? (
-              // 분석 결과 카드 (Fade+Slide)
+              // 분석 결과 카드
               <motion.div
-                className="p-4 border rounded bg-gray-50 shadow mt-4"
+                className="p-4 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 shadow mt-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <h3 className="text-lg font-bold text-red-600">
+                <h3 className="text-lg font-bold text-red-600 dark:text-red-400">
                   {analysisResult.title}
                 </h3>
-                <p className="mt-2">Confidence: {analysisResult.confidence}%</p>
-                <p className="mt-1">{analysisResult.recommendation}</p>
+                <p className="mt-2 dark:text-white">
+                  Confidence: {analysisResult.confidence}%
+                </p>
+                <p className="mt-1 dark:text-white">
+                  {analysisResult.recommendation}
+                </p>
                 <div className="flex gap-2 mt-4">
                   <button
                     className="bg-blue-500 text-white flex items-center gap-2 px-4 py-2 rounded"
@@ -174,8 +231,10 @@ export default function FileUpload() {
             ) : (
               // 업로드 화면
               <>
-                <p className="text-gray-600 text-center my-4">Upload your files for analysis.</p>
-                <label className="p-4 border-dashed border-2 border-gray-400 rounded-lg text-center cursor-pointer hover:bg-gray-200 transition-all block w-full">
+                <p className="text-gray-600 dark:text-gray-200 text-center my-4">
+                  Upload your files for analysis.
+                </p>
+                <label className="p-4 border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-lg text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all block w-full">
                   <input
                     type="file"
                     multiple
@@ -183,15 +242,19 @@ export default function FileUpload() {
                     accept=".png,.jpg,.jpeg,.pdf,.dicom"
                     className="hidden"
                   />
-                  <p className="text-gray-600">Drag & Drop or Click</p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Drag & Drop or Click
+                  </p>
                 </label>
                 <ul className="grid grid-cols-1 gap-2 my-4 w-full">
                   {files.map((file, idx) => (
                     <li
                       key={idx}
-                      className="flex justify-between items-center p-2 border rounded text-sm w-full"
+                      className="flex justify-between items-center p-2 border rounded text-sm w-full dark:border-gray-600"
                     >
-                      {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      <span className="dark:text-white">
+                        {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
                       <button
                         className="text-red-500"
                         onClick={() => removeFile(idx)}
@@ -203,12 +266,16 @@ export default function FileUpload() {
                 </ul>
                 <button
                   onClick={handleUpload}
-                  className="w-full bg-blue-500 text-white mt-4 px-4 py-2 rounded"
+                  className="w-full bg-blue-500 text-white mt-4 px-4 py-2 rounded disabled:opacity-50"
                   disabled={!files.length || uploading}
                 >
                   {uploading ? "Uploading..." : "Start Analysis"}
                 </button>
-                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                {error && (
+                  <p className="text-red-500 text-sm mt-2 dark:text-red-300">
+                    {error}
+                  </p>
+                )}
               </>
             )}
 
