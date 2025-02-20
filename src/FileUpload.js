@@ -6,15 +6,12 @@ import {
   FaApple,
   FaWeixin,
   FaTrash,
-  FaGlobe,
   FaDownload,
   FaShareAlt,
   FaChevronDown,
 } from "react-icons/fa";
 import { SiKakaotalk, SiNaver } from "react-icons/si";
-<FaGlobe />
-// 간단 i18n(다국어) 텍스트 정의
-// key: "Eng", "한", "日", "中" (language.lang와 동일)
+
 const i18n = {
   Eng: {
     title: "Medical Quick Analysis",
@@ -55,8 +52,6 @@ const i18n = {
   },
 };
 
-// 언어 선택 옵션
-// lang 필드와 flag(이모지 국기) 필드를 맞춰야 함
 const languageOptions = [
   { lang: "Eng", flag: "🇺🇸" },
   { lang: "한", flag: "🇰🇷" },
@@ -64,7 +59,6 @@ const languageOptions = [
   { lang: "中", flag: "🇨🇳" },
 ];
 
-// 대기 메시지 (분석 중 출력)
 const waitingMessages = [
   "Analysis in progress...",
   "Please wait a moment...",
@@ -74,7 +68,6 @@ const waitingMessages = [
   "Slowly rotate your shoulders!",
 ];
 
-// SNS 로그인 버튼 정보
 const socialLogins = [
   { icon: FaGoogle, text: "Google", bg: "bg-blue-500" },
   { icon: FaApple, text: "Apple", bg: "bg-black" },
@@ -84,20 +77,17 @@ const socialLogins = [
 ];
 
 export default function FileUpload() {
-  // 파일 관련
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  // 분석 화면/결과
   const [resultPending, setResultPending] = useState(false);
   const [showAnalysisScreen, setShowAnalysisScreen] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [waitingMessage, setWaitingMessage] = useState(waitingMessages[0]);
 
-  // (A) 언어 상태
+  // 현재 선택된 언어
   const [language, setLanguage] = useState(languageOptions[0]);
-  // 현재 언어에 맞는 번역 객체 (i18n[lang])
   const currentText = i18n[language.lang];
 
   // 드롭다운
@@ -107,9 +97,7 @@ export default function FileUpload() {
   // 다크 모드
   const [darkMode, setDarkMode] = useState(false);
 
-  // --------------------------
-  // 1) 다크 모드 Tailwind 설정
-  // --------------------------
+  // 다크 모드 적용
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -118,9 +106,7 @@ export default function FileUpload() {
     }
   }, [darkMode]);
 
-  // --------------------------
-  // 2) 드롭다운 외부 클릭 시 닫기
-  // --------------------------
+  // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     function handleClickOutside(e) {
       if (
@@ -132,14 +118,10 @@ export default function FileUpload() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isLanguageOpen]);
 
-  // --------------------------
-  // 3) 대기 메시지 순환
-  // --------------------------
+  // 대기 메시지 순환
   useEffect(() => {
     if (resultPending) {
       let index = 0;
@@ -151,9 +133,7 @@ export default function FileUpload() {
     }
   }, [resultPending]);
 
-  // --------------------------
-  // 파일 선택 핸들러
-  // --------------------------
+  // 파일 선택
   const handleFileChange = (event) => {
     const newFiles = Array.from(event.target.files);
     setFiles((prev) => [...prev, ...newFiles]);
@@ -165,9 +145,7 @@ export default function FileUpload() {
     setFiles(files.filter((_, i) => i !== index));
   };
 
-  // --------------------------
-  // 업로드 & 분석 버튼 핸들러
-  // --------------------------
+  // 업로드 & 분석
   const handleUpload = () => {
     if (!files.length) {
       return setError(currentText.errorNoFile);
@@ -176,7 +154,6 @@ export default function FileUpload() {
     setResultPending(true);
     setShowAnalysisScreen(true);
 
-    // 예시: 5초 후에 결과 표시
     setTimeout(() => {
       setUploading(false);
       setResultPending(false);
@@ -189,7 +166,6 @@ export default function FileUpload() {
     }, 5000);
   };
 
-  // PDF 다운로드, 공유 기능 (임시)
   const handleDownloadPDF = () => {
     alert("PDF Download not implemented");
   };
@@ -197,42 +173,42 @@ export default function FileUpload() {
     alert("Share Result not implemented");
   };
 
-  // --------------------------
-  // JSX 렌더링
-  // --------------------------
+  // 현재 언어 제외
+  const otherLanguages = languageOptions.filter(
+    (item) => item.lang !== language.lang
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 transition-colors">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 transition-colors">
-        
         {/* 상단 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold dark:text-white">
             {currentText.title}
           </h2>
-
           <div className="flex items-center gap-4">
-            {/* 다크 모드 스위치 */}
-            <div className="relative inline-flex h-6 w-11 items-center">
+            {/* 다크 모드 토글 */}
+            <label className="relative inline-flex h-6 w-11 items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={darkMode}
                 onChange={() => setDarkMode(!darkMode)}
-                className="sr-only peer"
+                className="sr-only"
               />
-              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
-              <div
+              <span className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors" />
+              <span
                 className={`
                   absolute left-1 top-1 w-4 h-4 bg-white dark:bg-gray-300 
-                  rounded-full transition-all 
+                  rounded-full transition-transform
                   ${darkMode ? "translate-x-5" : "translate-x-0"}
                 `}
-              ></div>
-            </div>
+              />
+            </label>
 
-            {/* 언어 드롭다운 (국기만 표시) */}
+            {/* 언어 드롭다운 */}
             <div className="relative" ref={dropdownRef}>
               <button
-                className="flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-700 transition-all cursor-pointer"
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
               >
                 <span className="text-xl dark:text-white">
@@ -240,7 +216,6 @@ export default function FileUpload() {
                 </span>
                 <FaChevronDown className="text-sm dark:text-white" />
               </button>
-              {/* 드롭다운 */}
               <AnimatePresence>
                 {isLanguageOpen && (
                   <motion.div
@@ -248,20 +223,43 @@ export default function FileUpload() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
-                    className="absolute right-0 mt-2 w-20 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg overflow-hidden"
+                    className="
+                      absolute 
+                      right-0 
+                      mt-1 
+                      z-50 
+                      bg-white 
+                      dark:bg-gray-700 
+                      border 
+                      dark:border-gray-600 
+                      shadow-lg 
+                      overflow-hidden 
+                      flex 
+                      flex-col 
+                      rounded-full
+                      p-1
+                    "
                   >
-                    {languageOptions.map(({ lang, flag }) => (
+                    {otherLanguages.map(({ lang, flag }) => (
                       <button
                         key={lang}
-                        className="flex items-center gap-2 px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 w-full text-left"
+                        className="
+                          px-3 
+                          py-2 
+                          hover:bg-gray-200 
+                          dark:hover:bg-gray-600 
+                          text-left 
+                          cursor-pointer 
+                          rounded-full
+                          flex 
+                          items-center
+                        "
                         onClick={() => {
                           setLanguage({ lang, flag });
                           setIsLanguageOpen(false);
                         }}
                       >
-                        <span className="text-xl dark:text-white">
-                          {flag}
-                        </span>
+                        <span className="text-xl dark:text-white">{flag}</span>
                       </button>
                     ))}
                   </motion.div>
@@ -283,7 +281,6 @@ export default function FileUpload() {
           </motion.div>
         ) : (
           <>
-            {/* 분석 결과 화면 */}
             {analysisResult ? (
               <motion.div
                 className="p-4 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 shadow mt-4"
@@ -316,7 +313,6 @@ export default function FileUpload() {
                 </div>
               </motion.div>
             ) : (
-              // 파일 업로드 화면
               <>
                 <p className="text-gray-600 dark:text-gray-200 text-center my-4">
                   {currentText.uploadText}
@@ -365,8 +361,6 @@ export default function FileUpload() {
                 )}
               </>
             )}
-
-            {/* SNS 간편 가입 */}
             <div className="flex justify-center gap-4 mt-8">
               {socialLogins.map(({ icon: Icon, text, bg }) => (
                 <button
