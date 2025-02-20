@@ -13,7 +13,50 @@ import {
 } from "react-icons/fa";
 import { SiKakaotalk, SiNaver } from "react-icons/si";
 
+// 간단 i18n(다국어) 텍스트 정의
+// key: "Eng", "한", "日", "中" (language.lang와 동일)
+const i18n = {
+  Eng: {
+    title: "Medical Quick Analysis",
+    uploadText: "Upload your files for analysis.",
+    startAnalysis: "Start Analysis",
+    analysisTitle: "Possible Pneumonia Detected",
+    confidence: "Confidence",
+    recommendation:
+      "We recommend you visit a pulmonologist for further examination.",
+    errorNoFile: "Please upload files.",
+  },
+  한: {
+    title: "간편 의료 분석",
+    uploadText: "분석을 위해 파일을 업로드하세요.",
+    startAnalysis: "분석 시작",
+    analysisTitle: "폐렴 가능성 감지",
+    confidence: "정확도",
+    recommendation: "호흡기내과 방문을 권장합니다.",
+    errorNoFile: "파일을 업로드 해주세요.",
+  },
+  日: {
+    title: "簡易医療分析",
+    uploadText: "分析のためにファイルをアップロードしてください。",
+    startAnalysis: "分析開始",
+    analysisTitle: "肺炎の可能性が検出されました",
+    confidence: "確信度",
+    recommendation: "呼吸器内科への受診をおすすめします。",
+    errorNoFile: "ファイルをアップロードしてください。",
+  },
+  中: {
+    title: "简易医疗分析",
+    uploadText: "请上传文件以进行分析。",
+    startAnalysis: "开始分析",
+    analysisTitle: "可能检测到肺炎",
+    confidence: "置信度",
+    recommendation: "建议您前往呼吸内科进行进一步检查。",
+    errorNoFile: "请上传文件。",
+  },
+};
+
 // 언어 선택 옵션
+// lang 필드와 flag(이모지 국기) 필드를 맞춰야 함
 const languageOptions = [
   { lang: "Eng", flag: "🇺🇸" },
   { lang: "한", flag: "🇰🇷" },
@@ -52,8 +95,12 @@ export default function FileUpload() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [waitingMessage, setWaitingMessage] = useState(waitingMessages[0]);
 
-  // 언어 설정
+  // (A) 언어 상태
   const [language, setLanguage] = useState(languageOptions[0]);
+  // 현재 언어에 맞는 번역 객체 (i18n[lang])
+  const currentText = i18n[language.lang];
+
+  // 드롭다운
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -110,7 +157,7 @@ export default function FileUpload() {
   const handleFileChange = (event) => {
     const newFiles = Array.from(event.target.files);
     setFiles((prev) => [...prev, ...newFiles]);
-    setError(newFiles.length ? "" : "Invalid file type or size exceeded (10MB max). ");
+    setError("");
   };
 
   // 파일 제거
@@ -123,23 +170,23 @@ export default function FileUpload() {
   // --------------------------
   const handleUpload = () => {
     if (!files.length) {
-      return setError("Please upload files.");
+      return setError(currentText.errorNoFile);
     }
     setUploading(true);
     setResultPending(true);
     setShowAnalysisScreen(true);
 
-    // 예시: 10초 후에 결과 표시
+    // 예시: 5초 후에 결과 표시
     setTimeout(() => {
       setUploading(false);
       setResultPending(false);
       setShowAnalysisScreen(false);
       setAnalysisResult({
-        title: "Possible Pneumonia Detected",
+        title: currentText.analysisTitle,
         confidence: 85,
-        recommendation: "We recommend you visit a pulmonologist for further examination.",
+        recommendation: currentText.recommendation,
       });
-    }, 10000);
+    }, 5000);
   };
 
   // PDF 다운로드, 공유 기능 (임시)
@@ -160,7 +207,7 @@ export default function FileUpload() {
         {/* 상단 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold dark:text-white">
-            Medical Quick Analysis
+            {currentText.title}
           </h2>
 
           <div className="flex items-center gap-4">
@@ -182,15 +229,14 @@ export default function FileUpload() {
               ></div>
             </div>
 
-            {/* 언어 드롭다운 */}
+            {/* 언어 드롭다운 (국기만 표시) */}
             <div className="relative" ref={dropdownRef}>
               <button
                 className="flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-full shadow hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
               >
-                <FaGlobe className="text-xl dark:text-white" />
-                <span className="dark:text-white">
-                  {language.flag} {language.lang}
+                <span className="text-xl dark:text-white">
+                  {language.flag}
                 </span>
                 <FaChevronDown className="text-sm dark:text-white" />
               </button>
@@ -202,18 +248,20 @@ export default function FileUpload() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
-                    className="absolute right-0 mt-2 w-24 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg overflow-hidden"
+                    className="absolute right-0 mt-2 w-20 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg overflow-hidden"
                   >
                     {languageOptions.map(({ lang, flag }) => (
                       <button
                         key={lang}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 w-full text-left"
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 w-full text-left"
                         onClick={() => {
                           setLanguage({ lang, flag });
                           setIsLanguageOpen(false);
                         }}
                       >
-                        <span className="dark:text-white">{flag} {lang}</span>
+                        <span className="text-xl dark:text-white">
+                          {flag}
+                        </span>
                       </button>
                     ))}
                   </motion.div>
@@ -247,7 +295,7 @@ export default function FileUpload() {
                   {analysisResult.title}
                 </h3>
                 <p className="mt-2 dark:text-white">
-                  Confidence: {analysisResult.confidence}%
+                  {currentText.confidence}: {analysisResult.confidence}%
                 </p>
                 <p className="mt-1 dark:text-white">
                   {analysisResult.recommendation}
@@ -271,7 +319,7 @@ export default function FileUpload() {
               // 파일 업로드 화면
               <>
                 <p className="text-gray-600 dark:text-gray-200 text-center my-4">
-                  Upload your files for analysis.
+                  {currentText.uploadText}
                 </p>
                 <label className="p-4 border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-lg text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all block w-full">
                   <input
@@ -308,7 +356,7 @@ export default function FileUpload() {
                   className="w-full bg-blue-500 text-white mt-4 px-4 py-2 rounded disabled:opacity-50"
                   disabled={!files.length || uploading}
                 >
-                  {uploading ? "Uploading..." : "Start Analysis"}
+                  {uploading ? "Uploading..." : currentText.startAnalysis}
                 </button>
                 {error && (
                   <p className="text-red-500 text-sm mt-2 dark:text-red-300">
