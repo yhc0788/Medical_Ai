@@ -1,7 +1,6 @@
 {
   "name": "my-medical-diagnosis",
   "version": "0.1.0",
-  "homepage": "https://yhc0788.github.io/Medical_Ai",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
