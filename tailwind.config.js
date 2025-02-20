@@ -1,10 +1,11 @@
 // tailwind.config.js
 module.exports = {
-    darkMode: 'class', // 꼭 필요
-    content: ["./src/**/*.{js,jsx,ts,tsx}"], // 소스 경로
-    theme: {
-      extend: {},
-    },
-    plugins: [],
-  };
-  
+  darkMode: 'class', // 다크모드 'class'로 사용
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}", 
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};

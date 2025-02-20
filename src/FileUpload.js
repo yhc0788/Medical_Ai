@@ -12,7 +12,7 @@ import {
   FaChevronDown,
 } from "react-icons/fa";
 import { SiKakaotalk, SiNaver } from "react-icons/si";
-
+<FaGlobe />
 // 간단 i18n(다국어) 텍스트 정의
 // key: "Eng", "한", "日", "中" (language.lang와 동일)
 const i18n = {
